@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "dagre": "^0.8.5",
+    "react-syntax-highlighter": "^16.1.1"
+  }
+}
