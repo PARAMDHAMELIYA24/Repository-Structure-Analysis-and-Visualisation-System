@@ -23,6 +23,8 @@ function App() {
   const [stats, setStats] = useState({});
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+  const [repoUrl, setRepoUrl] = useState("");
+  const [cloneMessage, setCloneMessage] = useState("");
   const graphRef = useRef(null);
 
     useEffect(() => {
@@ -155,6 +157,45 @@ const askAI = async () => {
         data.answer
 
     );
+
+};
+
+const analyzeRepo = async () => {
+
+    const response = await fetch(
+
+        "http://localhost:8000/api/clone",
+
+        {
+
+            method: "POST",
+
+            headers: {
+
+                "Content-Type":
+                    "application/json"
+
+            },
+
+            body: JSON.stringify({
+
+                url: repoUrl
+
+            })
+
+        }
+
+    );
+
+    const data = await response.json();
+
+    setCloneMessage(
+
+        data.message
+
+    );
+
+    window.location.reload(); 
 
 };
 
@@ -296,6 +337,64 @@ files.map((file) => (
         {code}
        </SyntaxHighlighter>
        <hr />
+
+       <hr />
+
+<h2>GitHub Repository Analyzer</h2>
+
+<input
+
+    value={repoUrl}
+
+    onChange={(e) =>
+
+        setRepoUrl(
+
+            e.target.value
+
+        )
+
+    }
+
+    placeholder="Enter GitHub URL"
+
+    style={{
+
+        width: "100%",
+
+        padding: "10px",
+
+        marginBottom: "10px"
+
+    }}
+
+/>
+
+<button
+
+    onClick={analyzeRepo}
+
+    style={{
+
+        padding: "10px",
+
+        marginBottom: "10px"
+
+    }}
+
+>
+
+Analyze Repository
+
+</button>
+
+<p>
+
+{cloneMessage}
+
+</p>
+
+<hr />
 
 <h2>Repository AI Chat</h2>
 

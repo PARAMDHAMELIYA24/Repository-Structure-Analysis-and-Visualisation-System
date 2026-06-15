@@ -10,6 +10,9 @@ from google import genai
 import os
 import ast
 
+
+
+
 load_dotenv()
 
 
@@ -25,7 +28,7 @@ app.add_middleware(
 
 AI_CACHE = {}
 CHAT_HISTORY = []
-CURRENT_DIRECTORY = "."
+CURRENT_DIRECTORY = None
 
 
 def scan_project(directory):
@@ -226,7 +229,16 @@ def scan_project(directory):
 @app.get("/api/map")
 def get_map():
 
-    return scan_project(CURRENT_DIRECTORY)
+    if CURRENT_DIRECTORY is None:
+
+        return {
+            "nodes": [],
+            "edges": []
+        }
+
+    return scan_project(
+        CURRENT_DIRECTORY
+    )
 
 @app.get("/")
 def home():
@@ -261,7 +273,7 @@ def test_scan():
 @app.get("/api/code/{file_id}")
 def get_code(file_id: str):
 
-    for root, dirs, files in os.walk("."):
+    for root, dirs, files in os.walk(CURRENT_DIRECTORY):
 
         if (
             "venv" in root
@@ -303,7 +315,7 @@ def get_files():
         ".java"
     )
 
-    for root, dirs, filenames in os.walk("."):
+    for root, dirs, files in os.walk(CURRENT_DIRECTORY):
 
         if (
             "venv" in root
@@ -313,7 +325,7 @@ def get_files():
         ):
             continue
 
-        for file in filenames:
+        for file in files:
 
             if file.endswith(extensions):
 
@@ -328,7 +340,7 @@ def get_files():
 @app.get("/api/stats")
 def get_stats():
 
-    graph = scan_project(".")
+    graph = scan_project(CURRENT_DIRECTORY)
 
     total_files = len(
         graph["nodes"]
@@ -346,13 +358,19 @@ def get_stats():
         graph["edges"]
     )
 
+    complexity_rank = {
+    "A": 1,
+    "B": 2,
+    "C": 3,
+    "D": 4
+    }
+
     most_complex_file = max(
-
-        graph["nodes"],
-
-        key=lambda node:
+    graph["nodes"],
+    key=lambda node:
+        complexity_rank[
             node["data"]["complexity"]
-
+        ]
     )
 
     return {
@@ -386,7 +404,7 @@ def analyze_file(file_id: str):
 
     code_text = ""
 
-    for root, dirs, files in os.walk("."):
+    for root, dirs, files in os.walk(CURRENT_DIRECTORY):
 
         if (
             "venv" in root
@@ -448,7 +466,7 @@ def chat_with_repo(data: dict):
         ".java"
     )
 
-    for root, dirs, files in os.walk("."):
+    for root, dirs, files in os.walk(CURRENT_DIRECTORY):
 
         if (
             "venv" in root
@@ -478,7 +496,7 @@ def chat_with_repo(data: dict):
 
                             + "\n"
 
-                            + f.read()
+                            + + f.read()[:2000]
 
                         )
 
@@ -518,5 +536,38 @@ def chat_with_repo(data: dict):
 
     }
 
+@app.post("/api/clone")
+def clone_repo(data: dict):
+
+    global CURRENT_DIRECTORY
+
+    repo_url = data["url"]
+
+    clone_path = "temp_repo"
+
+    if os.path.exists(clone_path):
+
+        shutil.rmtree(clone_path)
+
+    Repo.clone_from(
+
+        repo_url,
+
+        clone_path
+
+    )
+
+    CURRENT_DIRECTORY = clone_path
+
+    AI_CACHE.clear()
+    CHAT_HISTORY.clear()
+
+    return {
+
+        "message":
+
+        "Repository cloned successfully"
+
+    }
 
  
