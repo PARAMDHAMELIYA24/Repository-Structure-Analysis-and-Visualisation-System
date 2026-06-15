@@ -41,6 +41,8 @@ function App() {
   const [repoUrl, setRepoUrl] = useState("");
   const [cloneMessage, setCloneMessage] = useState("");
   const [loadingRepo, setLoadingRepo] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
   const [darkMode, setDarkMode] = useState(
 
     localStorage.getItem("darkMode") === "true"
@@ -341,6 +343,30 @@ const downloadReport = () => {
     window.open(
 
         "http://localhost:8000/api/report"
+
+    );
+
+};
+
+const searchRepository = async () => {
+
+    if (!searchText) {
+
+        return;
+
+    }
+
+    const response = await fetch(
+
+        `http://localhost:8000/api/search?query=${searchText}`
+
+    );
+
+    const data = await response.json();
+
+    setSearchResults(
+
+        data.results
 
     );
 
@@ -696,6 +722,102 @@ darkMode
        <hr />
 
        <hr />
+
+       <hr />
+
+<h2>Repository Search</h2>
+
+<input
+
+    value={searchText}
+
+    onChange={(e) =>
+
+        setSearchText(
+
+            e.target.value
+
+        )
+
+    }
+
+    placeholder="Search code..."
+
+    style={{
+
+        width: "100%",
+
+        padding: "10px",
+
+        marginBottom: "10px"
+
+    }}
+
+/>
+
+<button
+
+    onClick={searchRepository}
+
+    style={{
+
+        padding: "10px"
+
+    }}
+
+>
+
+    Search
+
+</button>
+
+{
+
+searchResults.map(
+
+(result, index) => (
+
+<div
+
+    key={index}
+
+    style={{
+
+        marginTop: "15px",
+
+        padding: "10px",
+
+        border: "1px solid gray"
+
+    }}
+
+>
+
+<b>
+
+{result.file}
+
+</b>
+
+<br />
+
+Line:
+
+{result.line_number}
+
+<br />
+
+<code>
+
+{result.content}
+
+</code>
+
+</div>
+
+))
+
+}
 
 <h2
     style={{

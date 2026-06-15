@@ -883,3 +883,72 @@ def clone_repo(data: dict):
         "Repository cloned successfully"
 
     }
+
+@app.get("/api/search")
+def search_code(query: str):
+
+    results = []
+
+    directory = CURRENT_DIRECTORY or "."
+
+    extensions = (
+        ".py",
+        ".cpp",
+        ".c",
+        ".h",
+        ".hpp",
+        ".js",
+        ".jsx",
+        ".ts",
+        ".java"
+    )
+
+    for root, dirs, files in os.walk(directory):
+
+        if (
+            "venv" in root
+            or "__pycache__" in root
+            or "node_modules" in root
+            or ".git" in root
+        ):
+            continue
+
+        for file in files:
+
+            if file.endswith(extensions):
+
+                path = os.path.join(root, file)
+
+                try:
+
+                    with open(
+                        path,
+                        "r",
+                        encoding="utf-8"
+                    ) as f:
+
+                        lines = f.readlines()
+
+                    for i, line in enumerate(lines):
+
+                        if query.lower() in line.lower():
+
+                            results.append({
+
+                                "file": file,
+
+                                "line_number": i + 1,
+
+                                "content": line.strip()
+
+                            })
+
+                except:
+
+                    pass
+
+    return {
+
+        "results": results
+
+    }
