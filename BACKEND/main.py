@@ -1,4 +1,5 @@
 import database
+import tempfile
 from git import Repo
 import shutil
 from radon.complexity import cc_visit
@@ -848,19 +849,20 @@ def clone_repo(data: dict):
 
     global CURRENT_DIRECTORY
 
+    import tempfile
+    import uuid
+
     repo_url = data["url"]
 
     clone_path = os.path.join(
 
-        os.path.expanduser("~"),
+        tempfile.gettempdir(),
 
-        "repo_analyzer_temp"
+        "repo_analyzer_temp_" +
+
+        str(uuid.uuid4())[:8]
 
     )
-
-    if os.path.exists(clone_path):
-
-        shutil.rmtree(clone_path)
 
     Repo.clone_from(
 
@@ -950,5 +952,102 @@ def search_code(query: str):
     return {
 
         "results": results
+
+    }
+
+@app.get("/api/history")
+def get_history():
+
+    repo_path = CURRENT_DIRECTORY or "."
+
+    try:
+
+        repo = Repo(repo_path)
+
+    except:
+
+        return {
+
+            "total_commits": 0,
+
+            "contributors": [],
+
+            "latest_commit": "",
+
+            "history": []
+
+        }
+
+    commits = list(repo.iter_commits())
+
+    contributor_count = {}
+
+    history = []
+
+    for commit in commits[:20]:
+
+        author = commit.author.name
+
+        contributor_count[author] = (
+
+            contributor_count.get(author, 0)
+
+            + 1
+
+        )
+
+        history.append({
+
+            "author": author,
+
+            "message": commit.message.strip(),
+
+            "date": str(commit.committed_datetime)
+
+        })
+
+    contributors = [
+
+        {
+
+            "name": name,
+
+            "commits": count
+
+        }
+
+        for name, count
+
+        in contributor_count.items()
+
+    ]
+
+    contributors.sort(
+
+        key=lambda x: x["commits"],
+
+        reverse=True
+
+    )
+
+    latest_commit = (
+
+        commits[0].message.strip()
+
+        if commits
+
+        else ""
+
+    )
+
+    return {
+
+        "total_commits": len(commits),
+
+        "contributors": contributors,
+
+        "latest_commit": latest_commit,
+
+        "history": history
 
     }

@@ -43,6 +43,10 @@ function App() {
   const [loadingRepo, setLoadingRepo] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [contributors, setContributors] = useState([]);
+  const [totalCommits, setTotalCommits] = useState(0);
+  const [latestCommit, setLatestCommit] = useState("");
   const [darkMode, setDarkMode] = useState(
 
     localStorage.getItem("darkMode") === "true"
@@ -95,6 +99,50 @@ function App() {
                 setStats(data);
 
         });
+
+        fetch(
+
+    "http://localhost:8000/api/history"
+
+)
+
+.then(
+
+    response => response.json()
+
+)
+
+.then(
+
+    data => {
+
+        setHistory(
+
+            data.history
+
+        );
+
+        setContributors(
+
+            data.contributors
+
+        );
+
+        setTotalCommits(
+
+            data.total_commits
+
+        );
+
+        setLatestCommit(
+
+            data.latest_commit
+
+        );
+
+        }
+
+        );
 
         
 
@@ -1019,6 +1067,110 @@ Dependencies:
   data={pieData}
   options={pieOptions}
 />
+
+<hr />
+
+<h2>Git History</h2>
+
+<p>
+
+Total Commits:
+
+{totalCommits}
+
+</p>
+
+<p>
+
+Latest Commit:
+
+{latestCommit}
+
+</p>
+
+<hr />
+
+<h2>Top Contributors</h2>
+
+{
+
+contributors.map(
+
+(contributor, index) => (
+
+<div
+
+    key={index}
+
+>
+
+<b>
+
+{contributor.name}
+
+</b>
+
+:
+
+{contributor.commits}
+
+ commits
+
+</div>
+
+))
+
+}
+
+<hr />
+
+<h2>Recent Commits</h2>
+
+{
+
+history.map(
+
+(commit, index) => (
+
+<div
+
+    key={index}
+
+    style={{
+
+        marginBottom: "15px",
+
+        padding: "10px",
+
+        border: "1px solid gray"
+
+    }}
+
+>
+
+<b>
+
+{commit.author}
+
+</b>
+
+<br />
+
+{commit.message}
+
+<br />
+
+<small>
+
+{commit.date}
+
+</small>
+
+</div>
+
+))
+
+}
 
 <hr />
 
