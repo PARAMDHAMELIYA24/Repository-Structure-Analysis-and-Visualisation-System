@@ -54,6 +54,30 @@ def scan_project(directory):
 
     for root, dirs, files in os.walk(directory):
 
+        dirs[:] = [
+
+    d
+
+    for d in dirs
+
+    if d not in (
+
+        "venv",
+
+        "__pycache__",
+
+        "node_modules",
+
+        ".git",
+
+        "tests",
+
+        "docs"
+
+    )
+
+]
+
         if (
             "venv" in root
             or "__pycache__" in root
@@ -70,7 +94,8 @@ def scan_project(directory):
                     os.path.join(root, file)
                 )
 
-    for file_path in file_list:
+    for file_path in file_list[:300]:
+
 
         file_name = os.path.basename(file_path)
 
@@ -232,8 +257,11 @@ def get_map():
     if CURRENT_DIRECTORY is None:
 
         return {
+
             "nodes": [],
+
             "edges": []
+
         }
 
     return scan_project(
@@ -273,6 +301,13 @@ def test_scan():
 @app.get("/api/code/{file_id}")
 def get_code(file_id: str):
 
+    if CURRENT_DIRECTORY is None:
+
+        raise HTTPException(
+            404,
+            "No repository loaded"
+        )
+
     for root, dirs, files in os.walk(CURRENT_DIRECTORY):
 
         if (
@@ -300,6 +335,14 @@ def get_code(file_id: str):
 
 @app.get("/api/files")
 def get_files():
+
+    if CURRENT_DIRECTORY is None:
+
+        return {
+
+            "files": []
+
+        }
 
     files = []
 
@@ -329,9 +372,11 @@ def get_files():
 
             if file.endswith(extensions):
 
-                files.append(
-                    os.path.join(root, file)
-                )
+                if len(files) < 300:
+
+                    files.append(
+                        os.path.join(root, file)
+                    )
 
     return {
         "files": files
@@ -340,57 +385,96 @@ def get_files():
 @app.get("/api/stats")
 def get_stats():
 
+    if CURRENT_DIRECTORY is None:
+
+        return {
+            "total_files": 0,
+            "total_loc": 0,
+            "total_dependencies": 0,
+            "most_complex_file": "",
+            "complexity_distribution": {
+                "A": 0,
+                "B": 0,
+                "C": 0,
+                "D": 0
+            }
+        }
+
     graph = scan_project(CURRENT_DIRECTORY)
 
-    total_files = len(
-        graph["nodes"]
-    )
+    total_files = len(graph["nodes"])
 
     total_loc = sum(
-
         node["data"]["loc"]
-
         for node in graph["nodes"]
-
     )
 
-    total_dependencies = len(
-        graph["edges"]
-    )
+    total_dependencies = len(graph["edges"])
+
+    count_A = 0
+    count_B = 0
+    count_C = 0
+    count_D = 0
+
+    for node in graph["nodes"]:
+
+        complexity = node["data"]["complexity"]
+
+        if complexity == "A":
+            count_A += 1
+
+        elif complexity == "B":
+            count_B += 1
+
+        elif complexity == "C":
+            count_C += 1
+
+        else:
+            count_D += 1
 
     complexity_rank = {
-    "A": 1,
-    "B": 2,
-    "C": 3,
-    "D": 4
+        "A": 1,
+        "B": 2,
+        "C": 3,
+        "D": 4
     }
 
     most_complex_file = max(
-    graph["nodes"],
-    key=lambda node:
-        complexity_rank[
-            node["data"]["complexity"]
-        ]
+        graph["nodes"],
+        key=lambda node:
+        complexity_rank[node["data"]["complexity"]]
     )
 
     return {
 
-        "total_files":
-            total_files,
+        "total_files": total_files,
 
-        "total_loc":
-            total_loc,
+        "total_loc": total_loc,
 
-        "total_dependencies":
-            total_dependencies,
+        "total_dependencies": total_dependencies,
 
-        "most_complex_file":
-            most_complex_file["id"]
+        "most_complex_file": most_complex_file["id"],
+
+        "complexity_distribution": {
+
+            "A": count_A,
+            "B": count_B,
+            "C": count_C,
+            "D": count_D
+
+        }
 
     }
 
 @app.get("/api/analyze/{file_id}")
 def analyze_file(file_id: str):
+
+    if CURRENT_DIRECTORY is None:
+
+        raise HTTPException(
+            404,
+            "No repository loaded"
+        )
 
     client = genai.Client(
         api_key=os.getenv("GEMINI_API_KEY")
@@ -449,6 +533,15 @@ def analyze_file(file_id: str):
 
 @app.post("/api/chat")
 def chat_with_repo(data: dict):
+
+    if CURRENT_DIRECTORY is None:
+
+        return {
+
+        "answer":
+        "Please analyze a repository first."
+
+        }
 
     question = data["question"]
 
@@ -541,13 +634,17 @@ def clone_repo(data: dict):
 
     global CURRENT_DIRECTORY
 
+    import uuid
+
     repo_url = data["url"]
 
-    clone_path = "temp_repo"
+    clone_path = (
 
-    if os.path.exists(clone_path):
+        "temp_repo_"
 
-        shutil.rmtree(clone_path)
+        + str(uuid.uuid4())[:8]
+
+    )
 
     Repo.clone_from(
 
@@ -560,6 +657,7 @@ def clone_repo(data: dict):
     CURRENT_DIRECTORY = clone_path
 
     AI_CACHE.clear()
+
     CHAT_HISTORY.clear()
 
     return {
@@ -569,5 +667,4 @@ def clone_repo(data: dict):
         "Repository cloned successfully"
 
     }
-
  

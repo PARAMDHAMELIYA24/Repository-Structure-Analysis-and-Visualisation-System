@@ -1,6 +1,8 @@
 {
   "dependencies": {
+    "chart.js": "^4.5.1",
     "dagre": "^0.8.5",
+    "react-chartjs-2": "^5.3.1",
     "react-syntax-highlighter": "^16.1.1"
   }
 }

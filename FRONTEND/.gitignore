@@ -22,3 +22,23 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+# Python
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+
+# Environment
+.env
+
+# Repository clones
+BACKEND/temp_repo_*/
+
+# Example repositories
+flask/
+
+# Vite
+dist/

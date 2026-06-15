@@ -1,3 +1,17 @@
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend
+} from "chart.js";
+
+import { Pie } from "react-chartjs-2";
+
+ChartJS.register(
+  ArcElement,
+  Tooltip,
+  Legend
+);
 import { toPng } from "html-to-image";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
@@ -20,11 +34,22 @@ function App() {
   const [code, setCode] = useState("");
   const [search, setSearch] = useState("");
   const [files, setFiles] = useState([]);
-  const [stats, setStats] = useState({});
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [repoUrl, setRepoUrl] = useState("");
   const [cloneMessage, setCloneMessage] = useState("");
+  const [loadingRepo, setLoadingRepo] = useState(false);
+  const [stats, setStats] = useState({
+  total_files: 0,
+  total_loc: 0,
+  total_dependencies: 0,
+  complexity_distribution: {
+    A: 0,
+    B: 0,
+    C: 0,
+    D: 0
+    }
+    });
   const graphRef = useRef(null);
 
     useEffect(() => {
@@ -36,11 +61,23 @@ function App() {
             setNodes(data.nodes);
             setEdges(data.edges);
 
+        });
+
+        fetch("http://localhost:8000/api/stats")
+            .then((response) => response.json())
+            .then((data) => {
+
+                setStats(data);
+
+            });
+
         fetch("http://localhost:8000/api/files")
             .then((response) => response.json())
             .then((data) => {
 
                 setFiles(data.files);
+
+        });
         
         fetch("http://localhost:8000/api/stats")
             .then((response) => response.json())
@@ -49,10 +86,6 @@ function App() {
                 setStats(data);
 
         });
-
-        });
-
-    });
 
         
 
@@ -162,40 +195,117 @@ const askAI = async () => {
 
 const analyzeRepo = async () => {
 
-    const response = await fetch(
-
-        "http://localhost:8000/api/clone",
-
-        {
-
-            method: "POST",
-
-            headers: {
-
-                "Content-Type":
-                    "application/json"
-
-            },
-
-            body: JSON.stringify({
-
-                url: repoUrl
-
-            })
-
-        }
-
-    );
-
-    const data = await response.json();
+    setLoadingRepo(true);
 
     setCloneMessage(
-
-        data.message
-
+        "Analyzing repository..."
     );
 
-    window.location.reload(); 
+    try {
+
+        console.log("Starting clone...");
+        const response = await fetch(
+
+            "http://localhost:8000/api/clone",
+
+            {
+
+                method: "POST",
+
+                headers: {
+
+                    "Content-Type":
+                        "application/json"
+
+                },
+
+                body: JSON.stringify({
+
+                    url: repoUrl
+
+                })
+
+            }
+
+        );
+
+        const data = await response.json();
+        console.log("Clone finished");
+
+        setCloneMessage(
+            data.message
+        );
+
+        window.location.reload();
+
+    }
+
+    catch (error) {
+
+        setCloneMessage(
+            "Failed to analyze repository"
+        );
+
+    }
+
+    finally {
+
+        setLoadingRepo(false);
+
+    }
+
+};
+
+const pieData = {
+  labels: [
+    "Simple (A)",
+    "Moderate (B)",
+    "Complex (C)",
+    "Very Complex (D)"
+  ],
+
+  datasets: [
+    {
+      data: [
+        stats.complexity_distribution.A,
+        stats.complexity_distribution.B,
+        stats.complexity_distribution.C,
+        stats.complexity_distribution.D
+      ],
+
+      backgroundColor: [
+        "#4CAF50",   // green
+        "#FFC107",   // yellow
+        "#FF9800",   // orange
+        "#F44336"    // red
+      ],
+
+      borderWidth: 1
+    }
+  ]
+};
+
+const pieOptions = {
+
+  plugins: {
+
+    legend: {
+
+      position: "bottom",
+
+      labels: {
+
+        color: "white",
+
+        font: {
+          size: 14
+        }
+
+      }
+
+    }
+
+  }
 
 };
 
@@ -371,28 +481,91 @@ files.map((file) => (
 />
 
 <button
-
     onClick={analyzeRepo}
-
+    disabled={loadingRepo}
     style={{
-
         padding: "10px",
-
         marginBottom: "10px"
-
     }}
-
 >
 
-Analyze Repository
+{
+    loadingRepo
+        ? "Analyzing..."
+        : "Analyze Repository"
+}
 
 </button>
+
+{loadingRepo && (
+
+<div
+    style={{
+
+        width: "40px",
+
+        height: "40px",
+
+        border: "5px solid gray",
+
+        borderTop:
+            "5px solid #4caf50",
+
+        borderRadius: "50%",
+
+        animation:
+            "spin 1s linear infinite",
+
+        margin:
+            "10px auto"
+
+    }}
+>
+
+</div>
+
+)}
 
 <p>
 
 {cloneMessage}
 
 </p>
+
+<hr />
+
+<hr />
+
+<h2>Project Statistics</h2>
+
+<p>
+
+Files:
+
+{stats.total_files}
+
+</p>
+
+<p>
+
+Lines of Code:
+
+{stats.total_loc}
+
+</p>
+
+<p>
+
+Dependencies:
+
+{stats.total_dependencies}
+
+</p>
+
+<Pie
+  data={pieData}
+  options={pieOptions}
+/>
 
 <hr />
 
