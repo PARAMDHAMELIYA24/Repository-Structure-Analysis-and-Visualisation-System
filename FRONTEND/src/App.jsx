@@ -15,6 +15,8 @@ ChartJS.register(
 import { toPng } from "html-to-image";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { oneLight }
+from "react-syntax-highlighter/dist/esm/styles/prism";
 import CustomNode from "./CustomNode";
 import { useEffect, useState, useRef } from "react";
 import { ReactFlow, MiniMap, Controls, Background } from "@xyflow/react";
@@ -39,6 +41,11 @@ function App() {
   const [repoUrl, setRepoUrl] = useState("");
   const [cloneMessage, setCloneMessage] = useState("");
   const [loadingRepo, setLoadingRepo] = useState(false);
+  const [darkMode, setDarkMode] = useState(
+
+    localStorage.getItem("darkMode") === "true"
+
+    );
   const [stats, setStats] = useState({
   total_files: 0,
   total_loc: 0,
@@ -90,6 +97,18 @@ function App() {
         
 
     }, []);
+
+        useEffect(() => {
+
+            localStorage.setItem(
+
+                "darkMode",
+
+                darkMode
+
+            );
+
+        }, [darkMode]);
 
   const onNodeClick = async (_, node) => {
 
@@ -295,10 +314,18 @@ const pieOptions = {
 
       labels: {
 
-        color: "white",
+        color:
+
+          darkMode
+
+          ? "white"
+
+          : "black",
 
         font: {
+
           size: 14
+
         }
 
       }
@@ -311,17 +338,43 @@ const pieOptions = {
 
   return (
     <div
-      style={{
-        width: "100vw",
-        height: "100vh",
-        display: "flex",
-      }}
+  style={{
+
+    width: "100vw",
+
+    height: "100vh",
+
+    display: "flex",
+
+    backgroundColor:
+
+      darkMode
+
+      ? "#0f172a"
+
+      : "#f5f5f5",
+
+        color:
+
+      darkMode
+
+      ? "white"
+
+      : "black"
+
+        }}
     >
       <div
   style={{
     width: "15%",
     padding: "15px",
-    borderRight: "1px solid gray",
+    borderLeft:
+
+    darkMode
+
+    ? "1px solid white"
+
+    : "1px solid black",
     overflowY: "auto"
   }}
 >
@@ -389,23 +442,115 @@ files.map((file) => (
                 flexDirection: "column"
             }}
       >
+
+        <button
+
+    onClick={() =>
+
+        setDarkMode(
+
+            !darkMode
+
+        )
+
+    }
+
+    style={{
+
+    margin: "10px",
+
+    padding: "10px",
+
+    fontSize: "16px",
+
+    backgroundColor:
+
+        darkMode
+
+        ? "#334155"
+
+        : "#e5e7eb",
+
+    color:
+
+        darkMode
+
+        ? "white"
+
+        : "black"
+
+}}
+
+>
+
+{
+
+darkMode
+
+? "☀️ Light Mode"
+
+: "🌙 Dark Mode"
+
+}
+
+</button>
         <input
             placeholder="Search files..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{
-                padding: "10px",
-                margin: "10px",
-                fontSize: "16px"
-            }}
+
+    padding: "10px",
+
+    margin: "10px",
+
+    fontSize: "16px",
+
+    backgroundColor:
+
+        darkMode
+
+        ? "#1e293b"
+
+        : "white",
+
+    color:
+
+        darkMode
+
+        ? "white"
+
+        : "black"
+
+}}
         />
         <button
     onClick={exportGraph}
     style={{
-        margin: "10px",
-        padding: "10px",
-        fontSize: "16px"
-    }}
+
+    padding: "10px",
+
+    margin: "10px",
+
+    fontSize: "16px",
+
+    backgroundColor:
+
+        darkMode
+
+        ? "#1e293b"
+
+        : "white",
+
+    color:
+
+        darkMode
+
+        ? "white"
+
+        : "black"
+
+}}
 >
 
     Export Architecture
@@ -428,29 +573,92 @@ files.map((file) => (
         style={{
           width: "25%",
           padding: "20px",
-          borderLeft: "1px solid gray",
+          borderLeft:
+
+    darkMode
+
+    ? "1px solid white"
+
+    : "1px solid black",
           overflowY: "auto",
         }}
       >
-      <h2>AI Summary</h2>
+      <h2
+    style={{
+
+        color:
+
+            darkMode
+
+            ? "white"
+
+            : "black"
+
+    }}
+>
+    AI Summary
+</h2>
 
       <p>{summary}</p>
       
       <hr />
       
-      <h2>Source Code</h2>
+      <h2
+    style={{
+
+        color:
+
+            darkMode
+
+            ? "white"
+
+            : "black"
+
+    }}
+>
+    Source Code
+</h2>
       
       <SyntaxHighlighter
-        language="python"
-        style={vscDarkPlus}
-        >
-        {code}
-       </SyntaxHighlighter>
+
+    language="python"
+
+    style={
+
+        darkMode
+
+        ? vscDarkPlus
+
+        : oneLight
+
+        
+
+    }
+
+>
+
+    {code}
+
+</SyntaxHighlighter>
        <hr />
 
        <hr />
 
-<h2>GitHub Repository Analyzer</h2>
+<h2
+    style={{
+
+        color:
+
+            darkMode
+
+            ? "white"
+
+            : "black"
+
+    }}
+>
+    GitHub Repository Analyzer
+</h2>
 
 <input
 
@@ -470,13 +678,29 @@ files.map((file) => (
 
     style={{
 
-        width: "100%",
+    width: "100%",
 
-        padding: "10px",
+    padding: "10px",
 
-        marginBottom: "10px"
+    marginBottom: "10px",
 
-    }}
+    backgroundColor:
+
+    darkMode
+
+    ? "#334155"
+
+    : "#e5e7eb",
+
+    color:
+
+        darkMode
+
+        ? "white"
+
+        : "black"
+
+}}
 
 />
 
@@ -484,8 +708,27 @@ files.map((file) => (
     onClick={analyzeRepo}
     disabled={loadingRepo}
     style={{
+
         padding: "10px",
-        marginBottom: "10px"
+
+        marginBottom: "10px",
+
+        backgroundColor:
+
+            darkMode
+
+            ? "#334155"
+
+            : "#e5e7eb",
+
+        color:
+
+            darkMode
+
+            ? "white"
+
+            : "black"
+
     }}
 >
 
@@ -536,7 +779,21 @@ files.map((file) => (
 
 <hr />
 
-<h2>Project Statistics</h2>
+<h2
+    style={{
+
+        color:
+
+            darkMode
+
+            ? "white"
+
+            : "black"
+
+    }}
+>
+    Project Statistics
+</h2>
 
 <p>
 
@@ -569,7 +826,21 @@ Dependencies:
 
 <hr />
 
-<h2>Repository AI Chat</h2>
+<h2
+    style={{
+
+        color:
+
+            darkMode
+
+            ? "white"
+
+            : "black"
+
+    }}
+>
+    Repository AI Chat
+</h2>
 
 <input
     value={question}
@@ -580,20 +851,61 @@ Dependencies:
     }
     placeholder="Ask about the repository..."
     style={{
+
         width: "100%",
+
         padding: "10px",
-        marginBottom: "10px"
+
+        marginBottom: "10px",
+
+        backgroundColor:
+
+    darkMode
+
+    ? "#334155"
+
+    : "#e5e7eb",
+
+        color:
+
+            darkMode
+
+            ? "white"
+
+            : "black"
+
     }}
 />
 
 <button
     onClick={askAI}
     style={{
+
         padding: "10px",
-        marginBottom: "10px"
+
+        marginBottom: "10px",
+
+        backgroundColor:
+
+            darkMode
+
+            ? "#334155"
+
+            : "#e5e7eb",
+
+        color:
+
+            darkMode
+
+            ? "white"
+
+            : "black"
+
     }}
 >
+
     Ask AI
+
 </button>
 
 <p>

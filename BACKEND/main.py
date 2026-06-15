@@ -638,11 +638,11 @@ def clone_repo(data: dict):
 
     repo_url = data["url"]
 
-    clone_path = (
+    clone_path = os.path.join(
 
-        "temp_repo_"
+    os.path.expanduser("~"),
 
-        + str(uuid.uuid4())[:8]
+    "repo_analyzer_temp"
 
     )
 
