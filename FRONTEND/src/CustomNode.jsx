@@ -1,22 +1,22 @@
 function CustomNode({ data }) {
 
-    let backgroundColor = "#90EE90";
+    let backgroundColor = "#22c55e";
 
     if (data.complexity === "B") {
 
-        backgroundColor = "#FFFF99";
+        backgroundColor = "#eab308";
 
     }
 
-    if (data.complexity === "C") {
+    else if (data.complexity === "C") {
 
-        backgroundColor = "#FFD580";
+        backgroundColor = "#f97316";
 
     }
 
-    if (data.complexity === "D") {
+    else if (data.complexity === "D") {
 
-        backgroundColor = "#FF9999";
+        backgroundColor = "#ef4444";
 
     }
 
@@ -24,22 +24,27 @@ function CustomNode({ data }) {
 
         <div
             style={{
-                backgroundColor: backgroundColor,
+
+                backgroundColor,
+
                 padding: "15px",
-                border: "1px solid black",
-                borderRadius: "10px",
+
+                borderRadius: "12px",
+
                 width: "170px",
-                textAlign: "center"
+
+                border: "2px solid black",
+
+                color: "black",
+
+                fontSize: "13px"
+
             }}
         >
 
-            <strong>
+            <b>{data.label}</b>
 
-                {data.label}
-
-            </strong>
-
-            <hr />
+            <br />
 
             LOC: {data.loc}
 

@@ -645,6 +645,27 @@ darkMode
           <MiniMap />
           <Controls />
           <Background />
+          <div
+    style={{
+
+        display: "flex",
+
+        gap: "20px",
+
+        margin: "10px"
+
+    }}
+>
+
+    <div>🟢 A : Simple</div>
+
+    <div>🟡 B : Moderate</div>
+
+    <div>🟠 C : Complex</div>
+
+    <div>🔴 D : Very Complex</div>
+
+</div>
         </ReactFlow>
       </div>
 
