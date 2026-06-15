@@ -42,3 +42,7 @@ flask/
 
 # Vite
 dist/
+
+BACKEND/temp_repo/
+BACKEND/temp_repo_*/
+flask/
