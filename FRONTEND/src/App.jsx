@@ -336,6 +336,16 @@ const pieOptions = {
 
 };
 
+const downloadReport = () => {
+
+    window.open(
+
+        "http://localhost:8000/api/report"
+
+    );
+
+};
+
   return (
     <div
   style={{
@@ -439,7 +449,9 @@ files.map((file) => (
                 width: "60%",
                 height: "100%",
                 display: "flex",
-                flexDirection: "column"
+                flexDirection: "column",
+                color: "black"
+                
             }}
       >
 
@@ -524,38 +536,79 @@ darkMode
 
 }}
         />
-        <button
-    onClick={exportGraph}
+<div
     style={{
 
-    padding: "10px",
+        display: "flex",
 
-    margin: "10px",
+        gap: "10px",
 
-    fontSize: "16px",
+        margin: "10px"
 
-    backgroundColor:
-
-        darkMode
-
-        ? "#1e293b"
-
-        : "white",
-
-    color:
-
-        darkMode
-
-        ? "white"
-
-        : "black"
-
-}}
+    }}
 >
 
-    Export Architecture
+    <button
+        onClick={exportGraph}
+        style={{
 
-</button>
+            padding: "10px",
+
+            backgroundColor:
+
+                darkMode
+
+                ? "#334155"
+
+                : "white",
+
+            color:
+
+                darkMode
+
+                ? "white"
+
+                : "black"
+
+        }}
+    >
+
+        Export Architecture
+
+    </button>
+
+    <button
+        onClick={downloadReport}
+        style={{
+
+            padding: "10px",
+
+            backgroundColor:
+
+                darkMode
+
+                ? "#334155"
+
+                : "white",
+
+            color:
+
+                darkMode
+
+                ? "white"
+
+                : "black"
+
+        }}
+    >
+
+        Download PDF Report
+
+    </button>
+
+</div>
+
+
         <ReactFlow
             nodes={nodes}
             edges={edges}

@@ -2,7 +2,21 @@ import database
 from git import Repo
 import shutil
 from radon.complexity import cc_visit
+from fastapi.responses import FileResponse
 
+from reportlab.platypus import (
+
+    SimpleDocTemplate,
+
+    Paragraph,
+
+    Spacer,
+
+    Table
+
+)
+from reportlab.platypus import Table
+from reportlab.lib.styles import getSampleStyleSheet
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
@@ -466,70 +480,270 @@ def get_stats():
 
     }
 
-@app.get("/api/analyze/{file_id}")
-def analyze_file(file_id: str):
+@app.get("/api/report")
+def generate_report():
 
-    if CURRENT_DIRECTORY is None:
+    graph = scan_project(
 
-        raise HTTPException(
-            404,
-            "No repository loaded"
-        )
+        CURRENT_DIRECTORY or "."
 
-    client = genai.Client(
-        api_key=os.getenv("GEMINI_API_KEY")
     )
 
-    if file_id in AI_CACHE:
-
-        return {
-            "summary": AI_CACHE[file_id]
-        }
-
-    code_text = ""
-
-    for root, dirs, files in os.walk(CURRENT_DIRECTORY):
-
-        if (
-            "venv" in root
-            or "node_modules" in root
-        ):
-            continue
-
-        if file_id in files:
-
-            with open(
-                os.path.join(root, file_id),
-                "r",
-                encoding="utf-8"
-            ) as f:
-
-                code_text = f.read()
-
-            break
-
-    if not code_text:
-
-        raise HTTPException(
-            404,
-            "File not found"
-        )
-
-    prompt = (
-        "Explain what this code does in 3 simple sentences:\n\n"
-        + code_text
+    total_files = len(
+        graph["nodes"]
     )
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt
+    total_loc = sum(
+
+        node["data"]["loc"]
+
+        for node in graph["nodes"]
+
     )
 
-    AI_CACHE[file_id] = response.text
+    total_dependencies = len(
+        graph["edges"]
+    )
 
-    return {
-        "summary": response.text
+    complexity_rank = {
+
+        "A": 1,
+        "B": 2,
+        "C": 3,
+        "D": 4
+
     }
+
+    most_complex_file = max(
+
+        graph["nodes"],
+
+        key=lambda node:
+
+        complexity_rank[
+            node["data"]["complexity"]
+        ]
+
+    )
+
+    largest_files = sorted(
+
+        graph["nodes"],
+
+        key=lambda node:
+        node["data"]["loc"],
+
+        reverse=True
+
+    )[:10]
+
+    filename = "project_report.pdf"
+
+    doc = SimpleDocTemplate(
+        filename
+    )
+
+    styles = getSampleStyleSheet()
+
+    story = []
+
+    story.append(
+
+        Paragraph(
+
+            "Repository Analysis Report",
+
+            styles["Title"]
+
+        )
+
+    )
+
+    story.append(
+        Spacer(1, 20)
+    )
+
+    story.append(
+
+        Paragraph(
+
+            "Project Statistics",
+
+            styles["Heading2"]
+
+        )
+
+    )
+
+    data = [
+
+        ["Metric", "Value"],
+
+        ["Total Files",
+         str(total_files)],
+
+        ["Total LOC",
+         str(total_loc)],
+
+        ["Dependencies",
+         str(total_dependencies)],
+
+        ["Most Complex File",
+         most_complex_file["id"]]
+
+    ]
+
+    story.append(
+        Table(data)
+    )
+
+    story.append(
+        Spacer(1, 20)
+    )
+
+    story.append(
+
+        Paragraph(
+
+            "Top 10 Largest Files",
+
+            styles["Heading2"]
+
+        )
+
+    )
+
+    for node in largest_files:
+
+        story.append(
+
+            Paragraph(
+
+                f'{node["id"]} : {node["data"]["loc"]} LOC',
+
+                styles["BodyText"]
+
+            )
+
+        )
+
+    story.append(
+        Spacer(1, 20)
+    )
+
+    story.append(
+
+        Paragraph(
+
+            "Complexity Distribution",
+
+            styles["Heading2"]
+
+        )
+
+    )
+
+    count_A = sum(
+
+        1
+
+        for node in graph["nodes"]
+
+        if node["data"]["complexity"] == "A"
+
+    )
+
+    count_B = sum(
+
+        1
+
+        for node in graph["nodes"]
+
+        if node["data"]["complexity"] == "B"
+
+    )
+
+    count_C = sum(
+
+        1
+
+        for node in graph["nodes"]
+
+        if node["data"]["complexity"] == "C"
+
+    )
+
+    count_D = sum(
+
+        1
+
+        for node in graph["nodes"]
+
+        if node["data"]["complexity"] == "D"
+
+    )
+
+    story.append(
+
+        Paragraph(
+
+            f"Grade A Files : {count_A}",
+
+            styles["BodyText"]
+
+        )
+
+    )
+
+    story.append(
+
+        Paragraph(
+
+            f"Grade B Files : {count_B}",
+
+            styles["BodyText"]
+
+        )
+
+    )
+
+    story.append(
+
+        Paragraph(
+
+            f"Grade C Files : {count_C}",
+
+            styles["BodyText"]
+
+        )
+
+    )
+
+    story.append(
+
+        Paragraph(
+
+            f"Grade D Files : {count_D}",
+
+            styles["BodyText"]
+
+        )
+
+    )
+
+    doc.build(
+        story
+    )
+
+    return FileResponse(
+
+        filename,
+
+        media_type="application/pdf",
+
+        filename="project_report.pdf"
+
+    )
 
 @app.post("/api/chat")
 def chat_with_repo(data: dict):
@@ -634,17 +848,19 @@ def clone_repo(data: dict):
 
     global CURRENT_DIRECTORY
 
-    import uuid
-
     repo_url = data["url"]
 
     clone_path = os.path.join(
 
-    os.path.expanduser("~"),
+        os.path.expanduser("~"),
 
-    "repo_analyzer_temp"
+        "repo_analyzer_temp"
 
     )
+
+    if os.path.exists(clone_path):
+
+        shutil.rmtree(clone_path)
 
     Repo.clone_from(
 
@@ -667,4 +883,3 @@ def clone_repo(data: dict):
         "Repository cloned successfully"
 
     }
- 
